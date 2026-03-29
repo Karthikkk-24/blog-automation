@@ -4,7 +4,7 @@ blog-automation — entry point
 
 Usage:
     python main.py "Your Blog Title"
-    python main.py "Your Blog Title" --tone professional
+    python main.py "Your Blog Title" --tone simple
     python main.py "Your Blog Title" --words 2000 --draft
     python main.py "Your Blog Title" --no-images
 """
@@ -17,14 +17,14 @@ import sys
 def _parse_args():
     parser = argparse.ArgumentParser(
         prog="blog-automation",
-        description="Generate and publish a full Medium blog post from a title.",
+        description="Generate and publish a full Dev.to blog post from a title.",
     )
     parser.add_argument("title", help="The blog post title.")
     parser.add_argument(
         "--tone",
-        choices=["storytelling", "casual", "professional", "technical"],
-        default="storytelling",
-        help="Writing tone (default: storytelling).",
+        choices=["simple", "storytelling", "casual", "professional", "technical"],
+        default="simple",
+        help="Writing tone (default: simple — plain English, easy to read).",
     )
     parser.add_argument(
         "--words",

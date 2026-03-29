@@ -6,6 +6,20 @@ from config import GEMINI_API_KEY, GEMINI_MODEL_PRIMARY, GEMINI_MODEL_FALLBACK
 genai.configure(api_key=GEMINI_API_KEY)
 
 TONE_INSTRUCTIONS = {
+    "simple": (
+        "Write so that anyone — a curious teenager, a non-tech parent, a first-time reader — "
+        "can read this and immediately get it. "
+        "Rules to follow strictly: "
+        "(1) Use short sentences. If a sentence is longer than 20 words, break it into two. "
+        "(2) Use everyday words. If you must use a technical term, explain it in plain English right away in the same sentence — like 'API (a way for apps to talk to each other)'. "
+        "(3) Use analogies and comparisons to things people already know — cooking, driving, shopping, building with Lego. "
+        "(4) Write in second person ('you') so the reader feels directly involved. "
+        "(5) No walls of text. Break content into short paragraphs of 2-3 sentences max. "
+        "(6) Add a 'Why does this matter?' moment in each section so the reader stays curious. "
+        "(7) Avoid buzzwords, jargon, and filler phrases like 'In today's fast-paced world'. "
+        "(8) End each section with one clear takeaway the reader can remember. "
+        "Goal: the reader finishes each section thinking 'Oh wow, that actually makes sense' — not 'I need to Google half of this'."
+    ),
     "storytelling": (
         "Write in a narrative, story-driven style. Open with a vivid anecdote or scene. "
         "Use human stories, real-life examples, and emotional hooks throughout. "
@@ -28,7 +42,7 @@ TONE_INSTRUCTIONS = {
 
 
 def _build_prompt(title: str, tone: str, word_count: int, feedback: str = "") -> str:
-    tone_guide = TONE_INSTRUCTIONS.get(tone, TONE_INSTRUCTIONS["storytelling"])
+    tone_guide = TONE_INSTRUCTIONS.get(tone, TONE_INSTRUCTIONS["simple"])
     feedback_block = (
         f"\n\nUser feedback on the previous draft — incorporate this:\n{feedback}\n"
         if feedback
@@ -78,7 +92,7 @@ Ensure all string values use proper English punctuation. Do not truncate any sec
 
 def generate_blog(
     title: str,
-    tone: str = "storytelling",
+    tone: str = "simple",
     word_count: int = 1800,
     feedback: str = "",
 ) -> dict:
