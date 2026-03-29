@@ -1,0 +1,312 @@
+================================================================
+  BLOG-AUTOMATION — HOW TO GET ALL API KEYS
+  Step-by-step guide for every key needed in .env
+================================================================
+
+KEYS YOU NEED (copy all 5 into your .env file):
+  GEMINI_API_KEY
+  HF_TOKEN
+  MEDIUM_TOKEN          <-- read the URGENT note below
+  MEDIUM_AUTHOR_ID
+  IMGBB_API_KEY
+
+================================================================
+  KEY 1: GEMINI_API_KEY
+  Service : Google Gemini (writes your entire blog)
+  Cost    : FREE — 1,500 requests/day on free tier
+  Time    : ~3 minutes
+================================================================
+
+STEP 1: Go to https://aistudio.google.com
+STEP 2: Sign in with your Google account
+STEP 3: Click "Get API key" in the top navigation bar
+STEP 4: Click "Create API key"
+STEP 5: Choose "Create API key in new project" (or select existing)
+STEP 6: Copy the key — it starts with "AIza..."
+
+Paste into .env as:
+  GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Notes:
+  - No credit card required
+  - Free tier is more than enough for daily blogging
+  - Model used: gemini-2.5-flash (auto-falls back to gemini-1.5-flash)
+  - Key is tied to your Google account — keep it private
+
+
+================================================================
+  KEY 2: HF_TOKEN
+  Service : Hugging Face (generates AI images via FLUX.1-schnell)
+  Cost    : FREE — generous free tier for inference
+  Time    : ~5 minutes
+================================================================
+
+STEP 1: Go to https://huggingface.co
+STEP 2: Click "Sign Up" (top right) — use your email or GitHub
+STEP 3: Verify your email address
+STEP 4: Click your profile picture (top right) → "Settings"
+STEP 5: In the left sidebar, click "Access Tokens"
+STEP 6: Click "New token"
+STEP 7: Fill in:
+          Name: blog-automation
+          Role: Read
+STEP 8: Click "Generate a token"
+STEP 9: Copy the token — it starts with "hf_..."
+
+Paste into .env as:
+  HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Notes:
+  - The token only needs "Read" access for inference API
+  - Model used: black-forest-labs/FLUX.1-schnell
+  - Free tier can be slow (5-15s per image) — that's expected
+  - If model is loading, the script auto-waits and retries
+
+
+================================================================
+  KEY 3: MEDIUM_TOKEN
+  Service : Medium (publishes your blog post)
+  Cost    : FREE
+  Time    : 5 minutes (settings page) OR 2-3 days (email request)
+================================================================
+
+⚠️  IMPORTANT — READ THIS FIRST:
+Medium restricted new API token generation. Some accounts can still
+get tokens from Settings, others are blocked and must email Medium.
+
+--- TRY THIS FIRST (Settings page, takes 2 min) ---
+
+STEP 1: Go to https://medium.com and log in
+STEP 2: Click your profile picture (top right) → "Settings"
+STEP 3: Scroll down to the "Security and apps" section
+STEP 4: Look for "Integration tokens"
+STEP 5: In the description box, type "blog-automation"
+STEP 6: Click "Get integration token"
+STEP 7: Copy the token immediately (it won't be shown again)
+
+Paste into .env as:
+  MEDIUM_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+--- IF THAT SECTION IS MISSING (email Medium) ---
+
+Send an email to: yourfriends@medium.com
+Subject: Requesting API Integration Token for Personal Blog Automation
+
+--- COPY THE EMAIL BELOW ---
+Subject: Requesting API Integration Token for Personal Blog Automation
+
+Hi Medium Team,
+
+I'm a Medium writer looking to use your Integration API
+(https://github.com/Medium/medium-api-docs) to automate publishing
+blog posts from my personal workflow.
+
+I noticed the "Integration tokens" section is not appearing in my
+account Settings → Security and apps page.
+
+Could you please either:
+a) Enable the Integration tokens feature for my account, or
+b) Issue me an integration token manually
+
+My Medium account email: [YOUR EMAIL ADDRESS HERE]
+My Medium username: @[YOUR USERNAME HERE]
+
+I plan to use it only to publish posts directly to my own profile —
+no scraping, no third-party access. Entirely personal use.
+
+Thank you!
+[YOUR NAME]
+--- END OF EMAIL ---
+
+Notes:
+  - Response time: typically 2-5 business days
+  - Be polite and specific — mention personal use only
+  - If no response in 7 days, reply to your sent email once
+
+--- ALTERNATIVE IF MEDIUM DOESN'T RESPOND ---
+
+Option A: Dev.to (instant — see KEY 3-ALT below)
+Option B: Hashnode (instant — see KEY 3-ALT below)
+Option C: Playwright browser automation (no token needed — ask in chat)
+
+
+================================================================
+  KEY 3-ALT: DEV.TO API KEY  [INSTANT — no waiting needed]
+  Service : Dev.to (popular tech blog platform, growing fast)
+  Cost    : FREE
+  Time    : ~3 minutes
+================================================================
+
+If you can't get a Medium token, Dev.to is a great alternative.
+It has a clean API and gives tokens instantly.
+
+STEP 1: Go to https://dev.to and create a free account
+STEP 2: Click your profile picture → "Settings"
+STEP 3: In the left sidebar scroll to "Account" → "DEV Community API Keys"
+STEP 4: In the "Description" box type "blog-automation"
+STEP 5: Click "Generate API Key"
+STEP 6: Copy the key
+
+To use this with the project:
+  - Add to .env as: DEVTO_API_KEY=xxxxxxxx
+  - Tell the developer (or AI) to switch publisher.py to use Dev.to
+
+Dev.to post API:
+  POST https://dev.to/api/articles
+  Header: api-key: YOUR_KEY
+  Body: { "article": { "title": "...", "body_markdown": "...", "published": true } }
+
+
+================================================================
+  KEY 3-ALT: HASHNODE API KEY  [INSTANT — no waiting needed]
+  Service : Hashnode (professional dev blogging platform)
+  Cost    : FREE
+  Time    : ~5 minutes
+================================================================
+
+STEP 1: Go to https://hashnode.com and sign up
+STEP 2: Create your blog (choose a subdomain like yourname.hashnode.dev)
+STEP 3: Click your profile picture (top right) → "Account Settings"
+STEP 4: Scroll to "Developer" section
+STEP 5: Click "Generate New Token"
+STEP 6: Copy the token
+
+You also need your Publication ID:
+  - Go to your blog dashboard
+  - URL will be like: hashnode.com/yourname/dashboard
+  - Your publication host is: yourname.hashnode.dev
+
+Hashnode uses GraphQL API:
+  Endpoint: https://gql.hashnode.com
+  Header: Authorization: YOUR_TOKEN
+
+
+================================================================
+  KEY 4: MEDIUM_AUTHOR_ID
+  What    : Your unique Medium user ID (needed to post via API)
+  Cost    : FREE
+  Time    : 2 minutes (requires MEDIUM_TOKEN first)
+================================================================
+
+STEP 1: Make sure you have your MEDIUM_TOKEN from Key 3 above
+STEP 2: Open your terminal
+STEP 3: Run this command (replace YOUR_TOKEN with your actual token):
+
+  curl -H "Authorization: Bearer YOUR_TOKEN" https://api.medium.com/v1/me
+
+STEP 4: You'll get a JSON response like this:
+  {
+    "data": {
+      "id": "1a2b3c4d5e6f...",   <-- THIS is your Author ID
+      "username": "yourname",
+      "name": "Your Name",
+      ...
+    }
+  }
+
+STEP 5: Copy the value of "id" (the long alphanumeric string)
+
+Paste into .env as:
+  MEDIUM_AUTHOR_ID=1a2b3c4d5e6f7g8h9i0j...
+
+--- ALTERNATIVE: Use Hoppscotch (no terminal needed) ---
+
+STEP 1: Go to https://hoppscotch.io (free, browser-based API tool)
+STEP 2: Set method to GET
+STEP 3: URL: https://api.medium.com/v1/me
+STEP 4: Click "Headers" tab → Add header:
+          Key: Authorization
+          Value: Bearer YOUR_MEDIUM_TOKEN
+STEP 5: Click "Send"
+STEP 6: Copy the "id" value from the response
+
+Notes:
+  - This ID never changes — you only need to fetch it once
+  - It's not the same as your username (it's a long internal ID)
+
+
+================================================================
+  KEY 5: IMGBB_API_KEY
+  Service : imgbb (hosts your AI images as public URLs for Medium)
+  Cost    : FREE forever
+  Time    : ~3 minutes
+================================================================
+
+Why this is needed:
+  Medium's API only accepts public image URLs (https://...).
+  It does NOT accept local file uploads. imgbb.com hosts your
+  AI-generated images and gives back public URLs that Medium accepts.
+
+STEP 1: Go to https://imgbb.com
+STEP 2: Click "Sign up" (top right)
+STEP 3: Register with your email (or Google/Facebook)
+STEP 4: Verify your email
+STEP 5: Once logged in, go to: https://api.imgbb.com
+STEP 6: Your API key is shown on that page — copy it
+
+Paste into .env as:
+  IMGBB_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Notes:
+  - Images are hosted permanently for free
+  - No watermarks on images
+  - API rate limit: plenty for our usage (a few images per blog)
+  - If imgbb is down, the script continues without that image
+
+
+================================================================
+  FINAL .env FILE — WHAT IT SHOULD LOOK LIKE WHEN DONE
+================================================================
+
+Create a file named exactly ".env" (with the dot) in the
+blog-automation/ folder and paste this with YOUR real values:
+
+  GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  MEDIUM_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  MEDIUM_AUTHOR_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  IMGBB_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+⚠️  SECURITY REMINDERS:
+  - Never share this file with anyone
+  - Never paste these keys in a chat, email, or GitHub
+  - The .gitignore already excludes .env from git commits
+  - If a key is accidentally shared, immediately regenerate it
+
+
+================================================================
+  QUICK STATUS TRACKER — TICK OFF AS YOU GO
+================================================================
+
+  [ ] GEMINI_API_KEY    — aistudio.google.com
+  [ ] HF_TOKEN          — huggingface.co → Settings → Access Tokens
+  [ ] MEDIUM_TOKEN      — medium.com Settings (or email if blocked)
+  [ ] MEDIUM_AUTHOR_ID  — curl https://api.medium.com/v1/me
+  [ ] IMGBB_API_KEY     — api.imgbb.com
+
+  Once all 5 are in your .env, run:
+    source venv/bin/activate
+    python main.py "Your First Blog Title" --draft --no-images
+
+  Use --draft and --no-images for your FIRST test run — it's the
+  fastest way to confirm everything is connected correctly before
+  doing a full image-generation + public publish run.
+
+
+================================================================
+  TIME ESTIMATES PER KEY
+================================================================
+
+  GEMINI_API_KEY    ~3 min   (instant on Google AI Studio)
+  HF_TOKEN          ~5 min   (signup + settings navigation)
+  MEDIUM_TOKEN      ~2 min   (if settings page works)
+                    ~3 days  (if you have to email them)
+  MEDIUM_AUTHOR_ID  ~2 min   (one curl command)
+  IMGBB_API_KEY     ~3 min   (signup + api page)
+
+  Total (best case): ~15 minutes
+  Total (if Medium email needed): ~3 days (other keys ready same day)
+
+================================================================
+  END OF GUIDE
+================================================================

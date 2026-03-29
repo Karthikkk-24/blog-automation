@@ -2,19 +2,15 @@ import os
 import re
 from datetime import date
 import requests
-from config import MEDIUM_TOKEN, MEDIUM_AUTHOR_ID, MEDIUM_API_BASE, OUTPUT_DIR
+from config import DEVTO_API_KEY, DEVTO_API_URL, OUTPUT_DIR
 
 
-def _blog_to_html(blog: dict, image_urls: list) -> str:
-    parts = []
-
-    parts.append(f"<h1>{blog['title']}</h1>")
+def _blog_to_markdown(blog: dict, image_urls: list) -> str:
+    lines = []
 
     intro = blog.get("intro", "")
-    for para in intro.split("\n\n"):
-        para = para.strip()
-        if para:
-            parts.append(f"<p>{para}</p>")
+    lines.append(intro)
+    lines.append("")
 
     sections = blog.get("sections", [])
     for i, sec in enumerate(sections):
@@ -22,28 +18,22 @@ def _blog_to_html(blog: dict, image_urls: list) -> str:
         content = sec.get("content", "")
         url = image_urls[i] if i < len(image_urls) else None
 
-        parts.append(f"<h2>{heading}</h2>")
+        lines.append(f"## {heading}")
+        lines.append("")
 
         if url:
-            parts.append(
-                f'<figure>'
-                f'<img src="{url}" alt="{heading}">'
-                f"</figure>"
-            )
+            lines.append(f"![{heading}]({url})")
+            lines.append("")
 
-        for para in content.split("\n\n"):
-            para = para.strip()
-            if para:
-                parts.append(f"<p>{para}</p>")
+        lines.append(content)
+        lines.append("")
 
-    parts.append("<h2>Conclusion</h2>")
-    conclusion = blog.get("conclusion", "")
-    for para in conclusion.split("\n\n"):
-        para = para.strip()
-        if para:
-            parts.append(f"<p>{para}</p>")
+    lines.append("## Conclusion")
+    lines.append("")
+    lines.append(blog.get("conclusion", ""))
+    lines.append("")
 
-    return "\n".join(parts)
+    return "\n".join(lines)
 
 
 def _blog_to_text(blog: dict) -> str:
@@ -77,6 +67,16 @@ def _slugify(title: str) -> str:
     return slug.strip("-")[:60]
 
 
+def _clean_devto_tags(tags: list) -> list:
+    cleaned = []
+    for tag in tags:
+        tag = tag.lower()
+        tag = re.sub(r"[^a-z0-9]", "", tag)
+        if tag and tag not in cleaned:
+            cleaned.append(tag)
+    return cleaned[:4]
+
+
 def _save_backup(blog: dict):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     today = date.today().isoformat()
@@ -89,41 +89,39 @@ def _save_backup(blog: dict):
     return filename
 
 
-def publish_to_medium(blog: dict, image_urls: list, draft: bool = False) -> str:
-    html_content = _blog_to_html(blog, image_urls)
-    publish_status = "draft" if draft else "public"
-
-    tags = blog.get("tags", [])[:5]
+def publish_to_devto(blog: dict, image_urls: list, draft: bool = False) -> str:
+    body_markdown = _blog_to_markdown(blog, image_urls)
+    tags = _clean_devto_tags(blog.get("tags", []))
 
     payload = {
-        "title": blog["title"],
-        "contentFormat": "html",
-        "content": html_content,
-        "tags": tags,
-        "publishStatus": publish_status,
+        "article": {
+            "title": blog["title"],
+            "body_markdown": body_markdown,
+            "published": not draft,
+            "tags": tags,
+        }
     }
 
     headers = {
-        "Authorization": f"Bearer {MEDIUM_TOKEN}",
+        "api-key": DEVTO_API_KEY,
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        "Accept": "application/vnd.forem.api-v1+json",
     }
 
-    url = f"{MEDIUM_API_BASE}/users/{MEDIUM_AUTHOR_ID}/posts"
-
-    print(f"  Publishing to Medium as '{publish_status}'...")
+    status_label = "draft" if draft else "public"
+    print(f"  Publishing to Dev.to as '{status_label}'...")
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response = requests.post(DEVTO_API_URL, json=payload, headers=headers, timeout=30)
     except requests.exceptions.RequestException as exc:
-        raise RuntimeError(f"Network error while publishing to Medium: {exc}")
+        raise RuntimeError(f"Network error while publishing to Dev.to: {exc}")
 
     if response.status_code not in (200, 201):
         raise RuntimeError(
-            f"Medium API error {response.status_code}: {response.text[:400]}"
+            f"Dev.to API error {response.status_code}: {response.text[:400]}"
         )
 
     data = response.json()
-    post_url = data.get("data", {}).get("url", "(URL not returned by API)")
+    post_url = data.get("url", "(URL not returned by API)")
 
     _save_backup(blog)
 

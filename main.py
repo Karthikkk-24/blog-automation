@@ -112,10 +112,10 @@ def main():
 
     # ── Step 5: Publish ──────────────────────────────────────────────────────
     if decision == "publish":
-        print("\n━━━ Publishing to Medium ...")
+        print("\n━━━ Publishing to Dev.to ...")
         try:
-            from publisher import publish_to_medium
-            post_url = publish_to_medium(blog, image_urls, draft=args.draft)
+            from publisher import publish_to_devto
+            post_url = publish_to_devto(blog, image_urls, draft=args.draft)
             status_label = "draft" if args.draft else "live"
             print(f"\n  ✅  Published ({status_label})!")
             print(f"  🔗  {post_url}\n")
