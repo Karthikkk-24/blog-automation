@@ -142,14 +142,3 @@ All generated files are saved in the `output/` folder:
 ```
 
 ---
-
-## Free services used
-
-| Service | Purpose | Cost |
-|---------|---------|------|
-| Google Gemini API | AI blog writing | Free (1,500 req/day) |
-| Hugging Face API | AI image generation | Free |
-| imgbb.com | Public image hosting | Free forever |
-| Medium API | Blog publishing | Free |
-
-**Total: ₹0 / month**
