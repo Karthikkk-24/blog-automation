@@ -3,12 +3,25 @@
   Step-by-step guide for every key needed in .env
 ================================================================
 
-KEYS YOU NEED (copy all 5 into your .env file):
-  GEMINI_API_KEY
-  HF_TOKEN
-  MEDIUM_TOKEN          <-- read the URGENT note below
-  MEDIUM_AUTHOR_ID
-  IMGBB_API_KEY
+KEYS YOU NEED — copy into your .env file based on platforms.json config:
+
+  ALWAYS REQUIRED (3 keys):
+    GEMINI_API_KEY
+    HF_TOKEN
+    IMGBB_API_KEY
+
+  PUBLISHING PLATFORMS (add keys for whichever you enable):
+    DEVTO_API_KEY          -- enable devto: true in platforms.json
+    MEDIUM_TOKEN           -- enable medium: true  <-- read URGENT note
+    MEDIUM_AUTHOR_ID       -- required with MEDIUM_TOKEN
+
+  SOCIAL SHARING (add keys for whichever you enable):
+    TWITTER_API_KEY        -- enable twitter: true in platforms.json
+    TWITTER_API_SECRET
+    TWITTER_ACCESS_TOKEN
+    TWITTER_ACCESS_TOKEN_SECRET
+    LINKEDIN_ACCESS_TOKEN  -- enable linkedin: true in platforms.json
+    LINKEDIN_PERSON_URN
 
 ================================================================
   KEY 1: GEMINI_API_KEY
@@ -255,17 +268,207 @@ Notes:
 
 
 ================================================================
+  KEY 6: TWITTER API KEYS  (4 keys total)
+  Service : Twitter / X (share a catchy tweet after publishing)
+  Cost    : FREE for posting to your own account
+  Time    : ~15 minutes
+================================================================
+
+Why 4 keys?
+  Twitter uses OAuth 1.0a for user-level actions (posting tweets).
+  Think of it as two padlocks and two keys — the App lock (API Key +
+  Secret) and your Account lock (Access Token + Secret). You need
+  all four to post a tweet as yourself.
+
+--- STEP A: Create a Developer Account ---
+
+STEP 1: Go to https://developer.x.com  (formerly developer.twitter.com)
+STEP 2: Click "Sign in" — use your existing Twitter/X account
+STEP 3: Click "Sign up for Free Account"
+STEP 4: Fill in your use-case description. Write something like:
+          "Personal blog automation tool to auto-share new blog posts
+          I publish. Will only post to my own account."
+STEP 5: Agree to the Developer Agreement and submit
+STEP 6: You should get immediate access (Free tier)
+
+--- STEP B: Create a Project and App ---
+
+STEP 7:  In the Developer Portal, click "+ Add App" or
+         "Create Project" → give it a name like "blog-automation"
+STEP 8:  Inside the project, click "+ Create App"
+STEP 9:  Give the app a name: "blog-automation" (must be unique globally
+         — add your name if taken, e.g. "blog-automation-karthik")
+STEP 10: You will now see your API Key and API Key Secret — COPY BOTH
+         immediately. They are shown only once.
+
+Paste into .env as:
+  TWITTER_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TWITTER_API_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+--- STEP C: Set App Permissions to Read + Write ---
+
+STEP 11: In your app's dashboard, click "Settings" tab
+STEP 12: Scroll to "User authentication settings" → click "Set up"
+STEP 13: Fill in:
+           App permissions    : Read and Write
+           Type of App        : Automated App or Bot
+           Callback URI       : http://localhost
+           Website URL        : https://github.com  (or your own site)
+STEP 14: Click "Save"
+
+⚠️  IMPORTANT: After changing permissions, you MUST regenerate your
+  Access Token and Secret (old ones carry old permissions).
+
+--- STEP D: Generate Access Token and Secret ---
+
+STEP 15: Go to your app's "Keys and Tokens" tab
+STEP 16: Under "Authentication Tokens" → "Access Token and Secret"
+         click "Generate"
+STEP 17: Copy BOTH values — shown only once
+
+Paste into .env as:
+  TWITTER_ACCESS_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TWITTER_ACCESS_TOKEN_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Notes:
+  - All 4 keys are tied to your Twitter account
+  - Free tier: up to 1,500 tweets/month — more than enough
+  - If you see a 403 error, your app permissions are wrong —
+    repeat STEP C and regenerate tokens in STEP D
+  - Never share these keys — anyone with them can tweet as you
+
+
+================================================================
+  KEY 7: LINKEDIN API KEYS  (2 keys total)
+  Service : LinkedIn (share a professional post after publishing)
+  Cost    : FREE
+  Time    : ~25 minutes (OAuth flow is slightly involved)
+================================================================
+
+Why is LinkedIn more complex?
+  LinkedIn uses OAuth 2.0, which means you go through a browser-based
+  login flow once to get an access token. It's like "Sign in with
+  LinkedIn" but the token is saved for your script to reuse.
+  The token lasts 60 days, then you repeat the flow.
+
+You will get 2 things:
+  LINKEDIN_ACCESS_TOKEN  — your authentication token (expires in 60 days)
+  LINKEDIN_PERSON_URN    — your unique LinkedIn user ID (never changes)
+
+--- STEP A: Create a LinkedIn Developer App ---
+
+STEP 1:  Go to https://developer.linkedin.com
+STEP 2:  Click "Create App" (sign in with your LinkedIn account if needed)
+STEP 3:  Fill in:
+           App name       : blog-automation
+           LinkedIn Page  : your LinkedIn profile URL
+                            (e.g. https://www.linkedin.com/in/yourname/)
+           App logo       : upload any small image (even a placeholder)
+STEP 4:  Check the legal agreement box and click "Create app"
+STEP 5:  You are now in the app dashboard. Go to the "Auth" tab.
+STEP 6:  Note down your Client ID and Client Secret (you'll need them
+         in the OAuth flow below)
+
+--- STEP B: Request API Access (Products) ---
+
+STEP 7:  Click the "Products" tab in your app dashboard
+STEP 8:  Find "Share on LinkedIn" → click "Request access"
+         (This gives you the w_member_social scope — needed to post)
+STEP 9:  Find "Sign In with LinkedIn using OpenID Connect" → Request access
+         (This gives you profile + openid scopes — needed to get your ID)
+STEP 10: Both are usually approved instantly
+
+--- STEP C: Set OAuth Redirect URL ---
+
+STEP 11: Go back to the "Auth" tab
+STEP 12: Under "OAuth 2.0 settings" → Authorized redirect URLs
+         click "Add redirect URL"
+STEP 13: Add exactly: http://localhost:8080/callback
+STEP 14: Click "Update"
+
+--- STEP D: Get Your Access Token (OAuth Flow) ---
+
+STEP 15: Open your browser and paste this URL (replace YOUR_CLIENT_ID):
+
+  https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:8080/callback&scope=openid%20profile%20w_member_social
+
+STEP 16: Log in with your LinkedIn account and click "Allow"
+STEP 17: Your browser will redirect to a URL like:
+           http://localhost:8080/callback?code=XXXXXXXXXXXXXX
+         The page will show an error (that's expected — localhost isn't
+         running anything). Copy the CODE value from the URL bar.
+
+STEP 18: Now exchange that code for an access token.
+         Run this curl command in your terminal (fill in all YOUR_ values):
+
+  curl -X POST https://www.linkedin.com/oauth/v2/accessToken \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=authorization_code" \
+    -d "code=YOUR_CODE_FROM_STEP_17" \
+    -d "redirect_uri=http://localhost:8080/callback" \
+    -d "client_id=YOUR_CLIENT_ID" \
+    -d "client_secret=YOUR_CLIENT_SECRET"
+
+STEP 19: You will get a JSON response like:
+  {
+    "access_token": "AQX...",   <-- COPY THIS
+    "expires_in": 5183944,
+    "token_type": "Bearer"
+  }
+
+Paste into .env as:
+  LINKEDIN_ACCESS_TOKEN=AQXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+--- STEP E: Get Your LinkedIn Person URN ---
+
+STEP 20: Run this command (replace YOUR_ACCESS_TOKEN):
+
+  curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+       https://api.linkedin.com/v2/me
+
+STEP 21: You will get a JSON response like:
+  {
+    "id": "abc123xyz",   <-- COPY JUST THIS VALUE (not the full URN)
+    "localizedFirstName": "Your",
+    "localizedLastName": "Name"
+  }
+
+Paste into .env as (just the ID, not the full URN):
+  LINKEDIN_PERSON_URN=abc123xyz
+
+Notes:
+  - Your access token expires in ~60 days
+  - To refresh: repeat STEP D only (app setup stays the same)
+  - LINKEDIN_PERSON_URN never changes — save it permanently
+  - If you get a 403 error, your "Share on LinkedIn" product
+    access may still be pending — wait a few minutes and retry
+
+
+================================================================
   FINAL .env FILE — WHAT IT SHOULD LOOK LIKE WHEN DONE
 ================================================================
 
 Create a file named exactly ".env" (with the dot) in the
-blog-automation/ folder and paste this with YOUR real values:
+blog-automation/ folder and paste this with YOUR real values.
+Leave keys blank for platforms you haven't enabled yet.
 
+  # ── Core (always required) ──────────────────────────────────
   GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  MEDIUM_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  MEDIUM_AUTHOR_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
   IMGBB_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  # ── Publishing platforms ─────────────────────────────────────
+  DEVTO_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  MEDIUM_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  MEDIUM_AUTHOR_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  # ── Social sharing ───────────────────────────────────────────
+  TWITTER_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TWITTER_API_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TWITTER_ACCESS_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  TWITTER_ACCESS_TOKEN_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  LINKEDIN_ACCESS_TOKEN=AQXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  LINKEDIN_PERSON_URN=abc123xyz
 
 ⚠️  SECURITY REMINDERS:
   - Never share this file with anyone
@@ -278,13 +481,25 @@ blog-automation/ folder and paste this with YOUR real values:
   QUICK STATUS TRACKER — TICK OFF AS YOU GO
 ================================================================
 
-  [ ] GEMINI_API_KEY    — aistudio.google.com
-  [ ] HF_TOKEN          — huggingface.co → Settings → Access Tokens
-  [ ] MEDIUM_TOKEN      — medium.com Settings (or email if blocked)
-  [ ] MEDIUM_AUTHOR_ID  — curl https://api.medium.com/v1/me
-  [ ] IMGBB_API_KEY     — api.imgbb.com
+  ALWAYS REQUIRED:
+  [ ] GEMINI_API_KEY              — aistudio.google.com
+  [ ] HF_TOKEN                    — huggingface.co → Settings → Access Tokens
+  [ ] IMGBB_API_KEY               — api.imgbb.com
 
-  Once all 5 are in your .env, run:
+  PUBLISHING (add for platforms you enable in platforms.json):
+  [ ] DEVTO_API_KEY               — dev.to → Settings → API Keys
+  [ ] MEDIUM_TOKEN                — medium.com Settings (or email if blocked)
+  [ ] MEDIUM_AUTHOR_ID            — curl https://api.medium.com/v1/me
+
+  SOCIAL SHARING (add for platforms you enable in platforms.json):
+  [ ] TWITTER_API_KEY             — developer.x.com → App → Keys and Tokens
+  [ ] TWITTER_API_SECRET          — same page as above
+  [ ] TWITTER_ACCESS_TOKEN        — same page, under Access Token
+  [ ] TWITTER_ACCESS_TOKEN_SECRET — same page, under Access Token
+  [ ] LINKEDIN_ACCESS_TOKEN       — OAuth flow (KEY 7, STEP D above)
+  [ ] LINKEDIN_PERSON_URN         — curl https://api.linkedin.com/v2/me
+
+  Once your core 3 + at least 1 publish platform are in your .env, run:
     source venv/bin/activate
     python main.py "Your First Blog Title" --draft --no-images
 
@@ -297,15 +512,29 @@ blog-automation/ folder and paste this with YOUR real values:
   TIME ESTIMATES PER KEY
 ================================================================
 
-  GEMINI_API_KEY    ~3 min   (instant on Google AI Studio)
-  HF_TOKEN          ~5 min   (signup + settings navigation)
-  MEDIUM_TOKEN      ~2 min   (if settings page works)
-                    ~3 days  (if you have to email them)
-  MEDIUM_AUTHOR_ID  ~2 min   (one curl command)
-  IMGBB_API_KEY     ~3 min   (signup + api page)
+  ALWAYS REQUIRED:
+  GEMINI_API_KEY              ~3 min   (instant on Google AI Studio)
+  HF_TOKEN                    ~5 min   (signup + settings navigation)
+  IMGBB_API_KEY               ~3 min   (signup + api page)
 
-  Total (best case): ~15 minutes
-  Total (if Medium email needed): ~3 days (other keys ready same day)
+  PUBLISHING PLATFORMS:
+  DEVTO_API_KEY               ~3 min   (instant from Dev.to settings)
+  MEDIUM_TOKEN                ~2 min   (if settings page works)
+                              ~3 days  (if you have to email them)
+  MEDIUM_AUTHOR_ID            ~2 min   (one curl command)
+
+  SOCIAL SHARING:
+  TWITTER (all 4 keys)        ~15 min  (developer account + app setup)
+  LINKEDIN (token + URN)      ~25 min  (app setup + OAuth flow)
+  LinkedIn token refresh      ~5 min   (every 60 days, STEP D only)
+
+  ──────────────────────────────────────────────────────────────
+  Minimum setup (Dev.to only):          ~14 minutes
+  With Twitter sharing added:           ~29 minutes
+  With LinkedIn sharing added:          ~39 minutes
+  Full setup (all platforms):           ~59 minutes
+  If Medium email needed:               +3 days
+  ──────────────────────────────────────────────────────────────
 
 ================================================================
   END OF GUIDE

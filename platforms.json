@@ -1,0 +1,10 @@
+{
+  "publish_to": {
+    "devto": true,
+    "medium": false
+  },
+  "share_on": {
+    "twitter": false,
+    "linkedin": false
+  }
+}
