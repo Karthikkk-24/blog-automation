@@ -2,7 +2,11 @@ import os
 import re
 from datetime import date
 import requests
-from config import DEVTO_API_KEY, DEVTO_API_URL, OUTPUT_DIR
+from config import (
+    DEVTO_API_KEY, DEVTO_API_URL,
+    MEDIUM_TOKEN, MEDIUM_AUTHOR_ID, MEDIUM_API_BASE,
+    OUTPUT_DIR,
+)
 
 
 def _blog_to_markdown(blog: dict, image_urls: list) -> str:
@@ -122,6 +126,79 @@ def publish_to_devto(blog: dict, image_urls: list, draft: bool = False) -> str:
 
     data = response.json()
     post_url = data.get("url", "(URL not returned by API)")
+
+    _save_backup(blog)
+
+    return post_url
+
+
+def _blog_to_html(blog: dict, image_urls: list) -> str:
+    parts = []
+
+    parts.append(f"<h1>{blog['title']}</h1>")
+
+    intro = blog.get("intro", "")
+    for para in intro.split("\n\n"):
+        para = para.strip()
+        if para:
+            parts.append(f"<p>{para}</p>")
+
+    for i, sec in enumerate(blog.get("sections", [])):
+        heading = sec.get("heading", "")
+        content = sec.get("content", "")
+        url = image_urls[i] if i < len(image_urls) else None
+
+        parts.append(f"<h2>{heading}</h2>")
+        if url:
+            parts.append(f'<figure><img src="{url}" alt="{heading}"></figure>')
+        for para in content.split("\n\n"):
+            para = para.strip()
+            if para:
+                parts.append(f"<p>{para}</p>")
+
+    parts.append("<h2>Conclusion</h2>")
+    for para in blog.get("conclusion", "").split("\n\n"):
+        para = para.strip()
+        if para:
+            parts.append(f"<p>{para}</p>")
+
+    return "\n".join(parts)
+
+
+def publish_to_medium(blog: dict, image_urls: list, draft: bool = False) -> str:
+    html_content = _blog_to_html(blog, image_urls)
+    publish_status = "draft" if draft else "public"
+    tags = blog.get("tags", [])[:5]
+
+    payload = {
+        "title": blog["title"],
+        "contentFormat": "html",
+        "content": html_content,
+        "tags": tags,
+        "publishStatus": publish_status,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {MEDIUM_TOKEN}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    url = f"{MEDIUM_API_BASE}/users/{MEDIUM_AUTHOR_ID}/posts"
+
+    print(f"  Publishing to Medium as '{publish_status}'...")
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f"Network error while publishing to Medium: {exc}")
+
+    if response.status_code not in (200, 201):
+        raise RuntimeError(
+            f"Medium API error {response.status_code}: {response.text[:400]}"
+        )
+
+    data = response.json()
+    post_url = data.get("data", {}).get("url", "(URL not returned by API)")
 
     _save_backup(blog)
 
