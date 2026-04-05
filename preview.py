@@ -3,6 +3,7 @@ import subprocess
 import sys
 import threading
 from flask import Flask, Response
+import webbrowser
 from config import OUTPUT_DIR, PREVIEW_PORT
 
 _flask_app = Flask(__name__)
@@ -192,16 +193,17 @@ def _build_html(blog: dict, image_urls: list) -> str:
 </html>"""
 
 
-def _start_flask(html: str):
+def _start_flask(html: str, port: int):
     global _html_content
     _html_content = html
     import logging
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.ERROR)
-    _flask_app.run(host="127.0.0.1", port=PREVIEW_PORT, debug=False, use_reloader=False)
+    _flask_app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
 
 
-def serve_preview(blog: dict, image_urls: list) -> str:
+def serve_preview(blog: dict, image_urls: list, port: int = PREVIEW_PORT,
+                  auto_open_browser: bool = False) -> str:
     global _server_thread
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -211,13 +213,21 @@ def serve_preview(blog: dict, image_urls: list) -> str:
     with open(preview_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    _server_thread = threading.Thread(target=_start_flask, args=(html,), daemon=True)
+    _server_thread = threading.Thread(target=_start_flask, args=(html, port), daemon=True)
     _server_thread.start()
 
-    print(f"\n  ✅  Preview ready → http://localhost:{PREVIEW_PORT}")
-    print("  Open the URL above in your browser, then return here.\n")
+    url = f"http://localhost:{port}"
+    print(f"\n  ✅  Preview ready → {url}")
+
+    if auto_open_browser:
+        webbrowser.open(url)
+        print("  Browser opened automatically.")
+    else:
+        print("  Open the URL above in your browser, then return here.")
+
+    print()
     print("  ┌──────────────────────────────────────┐")
-    print("  │  [P] Publish to Medium               │")
+    print("  │  [P] Publish                         │")
     print("  │  [E] Open HTML in editor to edit     │")
     print("  │  [Q] Quit without publishing         │")
     print("  └──────────────────────────────────────┘")
@@ -242,12 +252,12 @@ def serve_preview(blog: dict, image_urls: list) -> str:
                     updated_html = f.read()
                 global _html_content
                 _html_content = updated_html
-                print(f"  ✅  Preview updated → http://localhost:{PREVIEW_PORT} (refresh browser)")
+                print(f"  ✅  Preview updated → http://localhost:{port} (refresh browser)")
             except Exception as exc:
                 print(f"  Warning: could not reload preview: {exc}")
             print()
             print("  ┌──────────────────────────────────────┐")
-            print("  │  [P] Publish to Medium               │")
+            print("  │  [P] Publish                         │")
             print("  │  [E] Open HTML in editor again       │")
             print("  │  [Q] Quit without publishing         │")
             print("  └──────────────────────────────────────┘")

@@ -1,0 +1,18 @@
+{
+  "publish_to": {
+    "devto": true,
+    "medium": false
+  },
+  "share_on": {
+    "twitter": false,
+    "linkedin": false
+  },
+  "share_text": {
+    "enabled": true,
+    "copy_to_clipboard": true
+  },
+  "preview": {
+    "port": 5150,
+    "auto_open_browser": true
+  }
+}

@@ -68,9 +68,9 @@ Return ONLY raw JSON, no markdown fences:
     }
 
 
-def _review_in_terminal(platform: str, content: str) -> bool:
+def _print_box(label: str, content: str):
     width = 54
-    print(f"\n  ┌─── {platform} Preview {'─' * max(0, width - len(platform) - 10)}┐")
+    print(f"\n  ┌─── {label} {'─' * max(0, width - len(label) - 2)}┐")
     for line in content.split("\n"):
         while len(line) > width:
             print(f"  │  {line[:width]}")
@@ -78,6 +78,9 @@ def _review_in_terminal(platform: str, content: str) -> bool:
         print(f"  │  {line}")
     print(f"  └{'─' * (width + 4)}┘\n")
 
+
+def _review_in_terminal(platform: str, content: str) -> bool:
+    _print_box(f"{platform} Preview", content)
     while True:
         try:
             choice = input(f"  Post to {platform}?  [Y] Yes   [N] Skip: ").strip().upper()
@@ -88,6 +91,33 @@ def _review_in_terminal(platform: str, content: str) -> bool:
         if choice == "N":
             return False
         print("  Please type Y or N.")
+
+
+def _show_share_text(platform: str, content: str, copy_enabled: bool) -> None:
+    _print_box(f"{platform} — Copy & Share Manually", content)
+    if not copy_enabled:
+        return
+    while True:
+        try:
+            choice = input(f"  [{platform}]  [C] Copy to clipboard   [S] Skip: ").strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            return
+        if choice == "C":
+            try:
+                import pyperclip
+                pyperclip.copy(content)
+                print(f"  ✅  Copied! Paste it on {platform} to share manually.")
+            except ImportError:
+                print("  ⚠️  pyperclip not installed. Run: pip install pyperclip")
+                print("  Text displayed above — copy it manually.")
+            except Exception as exc:
+                print(f"  ⚠️  Clipboard error: {exc}")
+                print("  Text displayed above — copy it manually.")
+            return
+        if choice == "S":
+            print(f"  Skipped {platform}.")
+            return
+        print("  Please type C or S.")
 
 
 def post_to_twitter(tweet_text: str, blog_url: str) -> str:
@@ -160,10 +190,14 @@ def post_to_linkedin(post_text: str, blog_url: str, blog_title: str) -> str:
     return f"https://www.linkedin.com/feed/ (post ID: {post_id})" if post_id else "https://www.linkedin.com/feed/"
 
 
-def run_social_sharing(blog: dict, published_urls: dict, platforms: dict) -> None:
-    share_config = platforms.get("share_on", {})
+def run_social_sharing(blog: dict, published_urls: dict, config: dict) -> None:
+    share_config = config.get("share_on", {})
+    share_text_cfg = config.get("share_text", {})
 
-    if not any(share_config.values()):
+    has_auto_share = any(share_config.values())
+    has_text_share = share_text_cfg.get("enabled", False)
+
+    if not has_auto_share and not has_text_share:
         return
 
     primary_url = next(
@@ -176,13 +210,14 @@ def run_social_sharing(blog: dict, published_urls: dict, platforms: dict) -> Non
 
     print("\n━━━ [6] Generating social media posts with Gemini ...")
     social = _generate_social_content(blog, primary_url)
-    print("  Social posts ready for review.\n")
+    print("  Social posts ready.\n")
+
+    tweet   = social.get("tweet", "")
+    li_post = social.get("linkedin_post", "")
 
     if share_config.get("twitter"):
-        print("  ── Twitter ──────────────────────────────────────────")
-        tweet = social.get("tweet", "")
-        preview = f"{tweet}\n\n{primary_url}"
-        if _review_in_terminal("Twitter", preview):
+        print("  ── Twitter (auto-post) ──────────────────────────────")
+        if _review_in_terminal("Twitter", f"{tweet}\n\n{primary_url}"):
             try:
                 url = post_to_twitter(tweet, primary_url)
                 print(f"  ✅  Tweet posted! → {url}")
@@ -192,10 +227,8 @@ def run_social_sharing(blog: dict, published_urls: dict, platforms: dict) -> Non
             print("  Skipped Twitter.")
 
     if share_config.get("linkedin"):
-        print("\n  ── LinkedIn ─────────────────────────────────────────")
-        li_post = social.get("linkedin_post", "")
-        preview = f"{li_post}\n\nRead the full post: {primary_url}"
-        if _review_in_terminal("LinkedIn", preview):
+        print("\n  ── LinkedIn (auto-post) ─────────────────────────────")
+        if _review_in_terminal("LinkedIn", f"{li_post}\n\nRead the full post: {primary_url}"):
             try:
                 url = post_to_linkedin(li_post, primary_url, blog.get("title", ""))
                 print(f"  ✅  LinkedIn post shared! → {url}")
@@ -203,3 +236,22 @@ def run_social_sharing(blog: dict, published_urls: dict, platforms: dict) -> Non
                 print(f"  ❌  LinkedIn post failed: {exc}")
         else:
             print("  Skipped LinkedIn.")
+
+    if has_text_share:
+        copy_enabled = share_text_cfg.get("copy_to_clipboard", True)
+        shown_header = False
+
+        if not share_config.get("twitter"):
+            if not shown_header:
+                print("  ── Share Text — copy & post manually ───────────────")
+                shown_header = True
+            _show_share_text("Twitter / X", f"{tweet}\n\n{primary_url}", copy_enabled)
+
+        if not share_config.get("linkedin"):
+            if not shown_header:
+                print("  ── Share Text — copy & post manually ───────────────")
+            _show_share_text(
+                "LinkedIn",
+                f"{li_post}\n\nRead the full post: {primary_url}",
+                copy_enabled,
+            )

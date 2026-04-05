@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PLATFORMS_FILE = "platforms.json"
+CONFIG_FILE = "config.json"
 
 _ALWAYS_REQUIRED = ["GEMINI_API_KEY", "HF_TOKEN", "IMGBB_API_KEY"]
 
@@ -21,28 +21,30 @@ _PLATFORM_KEYS = {
 }
 
 
-def load_platforms() -> dict:
+def load_config() -> dict:
     defaults = {
-        "publish_to": {"devto": True, "medium": False},
-        "share_on":   {"twitter": False, "linkedin": False},
+        "publish_to":  {"devto": True, "medium": False},
+        "share_on":    {"twitter": False, "linkedin": False},
+        "share_text":  {"enabled": True, "copy_to_clipboard": True},
+        "preview":     {"port": 5050, "auto_open_browser": False},
     }
     try:
-        with open(PLATFORMS_FILE, "r", encoding="utf-8") as f:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"  Warning: {PLATFORMS_FILE} not found — using defaults (Dev.to only).")
+        print(f"  Warning: {CONFIG_FILE} not found — using defaults (Dev.to only).")
         return defaults
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Invalid JSON in {PLATFORMS_FILE}: {exc}")
+        raise RuntimeError(f"Invalid JSON in {CONFIG_FILE}: {exc}")
 
 
 def validate_config():
-    platforms = load_platforms()
+    cfg = load_config()
     required = list(_ALWAYS_REQUIRED)
 
     for section, platform_map in _PLATFORM_KEYS.items():
         for platform, keys in platform_map.items():
-            if platforms.get(section, {}).get(platform):
+            if cfg.get(section, {}).get(platform):
                 required.extend(keys)
 
     missing = [k for k in required if not os.getenv(k)]
@@ -50,7 +52,7 @@ def validate_config():
         raise EnvironmentError(
             f"Missing required environment variable(s): {', '.join(missing)}\n"
             "Check your .env file and ensure all keys for enabled platforms are set.\n"
-            f"Enabled platforms are controlled by {PLATFORMS_FILE}."
+            f"Enabled platforms are controlled by {CONFIG_FILE}."
         )
 
 
