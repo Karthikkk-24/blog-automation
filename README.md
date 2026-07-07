@@ -1,144 +1,113 @@
-# blog-automation
+# Blog Automation
 
-A Python CLI tool that writes, previews, and publishes a full Medium blog post from a single title — completely free, no monthly fees, runs on your own machine.
+A Python CLI tool that automatically writes, previews, and publishes full blog posts based on a single title. It uses Google Gemini for writing the content, Hugging Face (FLUX.1-schnell) for generating custom images, and supports publishing to Dev.to and Medium, as well as social sharing to Twitter and LinkedIn.
 
-**Time to publish:** ~2 minutes after setup.
+## Features
 
----
+- Generates a fully structured blog post (1,500-2,000 words by default).
+- Generates custom AI images for each section of the blog.
+- Supports configuring publishing platforms (Dev.to, Medium).
+- Auto-shares on Twitter and LinkedIn.
+- Includes a local Flask server to preview the styled post before publishing.
 
-## What it does
+## Prerequisites & Setup
 
-1. You type one blog title
-2. Gemini AI writes a full 1,500–2,000 word structured blog
-3. Flux.1-schnell generates one custom image per section
-4. A local Flask server shows you a styled browser preview
-5. Press **P** to publish live to your Medium profile
+### 1. API Keys
+You need the following required API keys:
+- `GEMINI_API_KEY`: Google Gemini (AI writer)
+- `HF_TOKEN`: Hugging Face (AI images)
+- `IMGBB_API_KEY`: imgbb (Image hosting)
 
----
+Depending on where you want to publish/share, you will also need:
+- `DEVTO_API_KEY`: For Dev.to publishing.
+- `MEDIUM_TOKEN` & `MEDIUM_AUTHOR_ID`: For Medium publishing.
+- `TWITTER_API_KEY`, `TWITTER_API_SECRET`, `TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_TOKEN_SECRET`: For Twitter sharing.
+- `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_PERSON_URN`: For LinkedIn sharing.
 
-## Prerequisites — Get these first
-
-You need 5 free API keys before running anything.
-
-| Key | Service | URL | Urgency |
-|-----|---------|-----|---------|
-| `GEMINI_API_KEY` | Google Gemini (AI writer) | https://aistudio.google.com | Normal |
-| `HF_TOKEN` | Hugging Face (AI images) | https://huggingface.co → Settings → Access Tokens | Normal |
-| `MEDIUM_TOKEN` | Medium integration token | medium.com → Settings → Security & apps | **⚠️ Get first — limited availability** |
-| `MEDIUM_AUTHOR_ID` | Your Medium user ID | See below | After Medium token |
-| `IMGBB_API_KEY` | imgbb image hosting | https://api.imgbb.com | Normal |
-
-### Getting your Medium Author ID
-
-After you have your Medium token, run:
-
+### 2. Installation
 ```bash
-curl -H "Authorization: Bearer YOUR_MEDIUM_TOKEN" https://api.medium.com/v1/me
-```
-
-Copy the `data.id` value from the JSON response.
-
----
-
-## Setup
-
-```bash
-# 1. Clone / enter the project folder
+# Clone the repository and enter the directory (if you haven't already)
 cd blog-automation
 
-# 2. Create virtual environment
+# Create and activate a virtual environment
 python3 -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
+```
 
-# 4. Set up your API keys
+### 3. Configuration
+Copy the sample environment file and fill in your keys:
+```bash
 cp .env.example .env
-# Open .env and fill in all 5 values
 ```
 
-Your `.env` file:
-
+Configure your enabled platforms in `config.json`. By default, Dev.to publishing and preview auto-open are enabled.
+```json
+{
+  "publish_to": {
+    "devto": true,
+    "medium": false
+  },
+  "share_on": {
+    "twitter": false,
+    "linkedin": false
+  },
+  "share_text": {
+    "enabled": true,
+    "copy_to_clipboard": true
+  },
+  "preview": {
+    "port": 5050,
+    "auto_open_browser": true
+  }
+}
 ```
-GEMINI_API_KEY=AIza...
-HF_TOKEN=hf_...
-MEDIUM_TOKEN=...
-MEDIUM_AUTHOR_ID=...
-IMGBB_API_KEY=...
+
+## How to Run (Modes)
+
+Run the application using `main.py` with your blog post title. The application provides several modes and options:
+
+### 1. Standard / Public Mode
+Generates the blog post, generates images, launches a preview server, and waits for your confirmation to publish publicly to your configured platforms.
+```bash
+python main.py "The Future of Artificial Intelligence"
 ```
 
-> **Never commit `.env` to git.** It is already in `.gitignore`.
+### 2. Draft Mode (`--draft`)
+Publishes the post as a draft (not visible to the public) on all configured platforms.
+```bash
+python main.py "The Future of Artificial Intelligence" --draft
+```
 
----
+### 3. No-Images Mode (`--no-images`)
+Skips the image generation phase. This makes the generation much faster (~30 seconds instead of ~2 minutes).
+```bash
+python main.py "The Future of Artificial Intelligence" --no-images
+```
 
-## Usage
+### 4. Custom Tone and Word Count
+You can customize the writing style and the target length of the post.
+- **Tones available**: `simple` (default), `storytelling`, `casual`, `professional`, `technical`
+- **Words**: Integer value (default is 1800)
 
 ```bash
-python main.py "Your Blog Title"
+python main.py "Understanding Microservices" --tone technical --words 2500
 ```
 
-### All flags
+## Previewing and Publishing
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--tone` | `storytelling` | Writing style: `storytelling`, `casual`, `professional`, `technical` |
-| `--words` | `1800` | Target word count |
-| `--draft` | off | Publish to Medium as a **draft** (not public) |
-| `--no-images` | off | Skip image generation (~30 sec total instead of ~2 min) |
+Once generation is complete, a local Flask server will start (default: `http://localhost:5050`). If enabled in `config.json`, your browser will open automatically.
 
-### Examples
+In the terminal running the preview server, you can:
+- Press **P**: Publish the post immediately to the configured platforms.
+- Press **E**: Open `output/preview.html` in your system editor to make manual changes, then press Enter to reload the preview.
+- Press **Q**: Quit the process without publishing.
 
-```bash
-# Default: storytelling tone, ~1800 words, public post
-python main.py "The Hidden Cost of Convenience"
+## Output
 
-# Professional tone, longer post
-python main.py "Why Microservices Fail at Scale" --tone professional --words 2000
-
-# Quick draft, no images
-python main.py "My Travel Notes from Tokyo" --draft --no-images
-```
-
----
-
-## Preview controls
-
-Once the browser preview loads at `http://localhost:5050`:
-
-| Key | Action |
-|-----|--------|
-| `P` | Publish to Medium immediately |
-| `E` | Open `output/preview.html` in your system editor, then press Enter to reload |
-| `Q` | Quit without publishing |
-
----
-
-## Output files
-
-All generated files are saved in the `output/` folder:
-
-| File | Description |
-|------|-------------|
-| `section_N_image.png` | Locally saved AI-generated images |
-| `preview.html` | Styled HTML preview of your blog |
-| `YYYY-MM-DD_slug.txt` | Plain-text backup of every published blog |
-
----
-
-## Architecture
-
-```
-.env / config.py
-     │
-     ▼
-  main.py ──► writer.py      (Gemini → blog dict)
-     │
-     ├──────► image_gen.py   (HF → PNG files → imgbb → public URLs)
-     │
-     ├──────► preview.py     (Flask server at localhost:5050)
-     │
-     └──────► publisher.py   (Medium API → live post URL)
-```
-
----
+All generated files and backups are stored in the `output/` directory:
+- Locally saved images for each section (`section_N_image.png`)
+- The generated HTML preview (`preview.html`)
+- A plain text backup of the published blog (`YYYY-MM-DD_slug.txt`)
