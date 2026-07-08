@@ -43,6 +43,12 @@ def _parse_args():
         dest="no_images",
         help="Skip image generation (much faster).",
     )
+    parser.add_argument(
+        "--context",
+        type=str,
+        default="",
+        help="Additional context or instructions for the AI (e.g., explaining acronyms).",
+    )
     return parser.parse_args()
 
 
@@ -104,7 +110,7 @@ def main():
     print("━━━ [2/5] Generating blog with Gemini ...")
     try:
         from writer import generate_blog
-        blog = generate_blog(title=args.title, tone=args.tone, word_count=args.words)
+        blog = generate_blog(title=args.title, tone=args.tone, word_count=args.words, context=args.context)
         print()
     except Exception as exc:
         print(f"\n  ❌  Blog generation failed:\n  {exc}\n")
