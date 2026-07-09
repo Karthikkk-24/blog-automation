@@ -41,15 +41,20 @@ TONE_INSTRUCTIONS = {
 }
 
 
-def _build_prompt(title: str, tone: str, word_count: int, feedback: str = "") -> str:
+def _build_prompt(title: str, tone: str, word_count: int, feedback: str = "", context: str = "") -> str:
     tone_guide = TONE_INSTRUCTIONS.get(tone, TONE_INSTRUCTIONS["simple"])
     feedback_block = (
         f"\n\nUser feedback on the previous draft — incorporate this:\n{feedback}\n"
         if feedback
         else ""
     )
+    context_block = (
+        f"\n\nADDITIONAL CONTEXT FROM USER:\n{context}\n(Use this context to inform the blog content, but do not explicitly print this context text in the blog unless relevant.)\n"
+        if context
+        else ""
+    )
 
-    return f"""You are an expert blog writer for Medium.com.{feedback_block}
+    return f"""You are an expert blog writer for Medium.com.{feedback_block}{context_block}
 
 Write a complete, publication-ready blog post on the topic: "{title}"
 
@@ -95,8 +100,9 @@ def generate_blog(
     tone: str = "simple",
     word_count: int = 1800,
     feedback: str = "",
+    context: str = "",
 ) -> dict:
-    prompt = _build_prompt(title, tone, word_count, feedback)
+    prompt = _build_prompt(title, tone, word_count, feedback, context)
 
     for model_name in [GEMINI_MODEL_PRIMARY, GEMINI_MODEL_FALLBACK]:
         try:

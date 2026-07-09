@@ -96,6 +96,12 @@ You can customize the writing style and the target length of the post.
 python main.py "Understanding Microservices" --tone technical --words 2500
 ```
 
+### 5. Adding AI Context (`--context`)
+You can pass additional instructions or background information to the AI. This is useful for explaining specific acronyms, providing a particular angle, or telling the AI what to focus on. The AI will use this context to inform the blog, but the context text itself won't be explicitly printed.
+```bash
+python main.py "The Rise of MCP" --context "MCP stands for Model Context Protocol, an open standard for connecting AI models to data sources."
+```
+
 ## Previewing and Publishing
 
 Once generation is complete, a local Flask server will start (default: `http://localhost:5050`). If enabled in `config.json`, your browser will open automatically.
