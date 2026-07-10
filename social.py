@@ -36,14 +36,11 @@ Generate two social media posts:
    - Open with a sharp insight or question — no fluff opener
    - 3-4 short paragraphs, each punchy and valuable on its own
    - End with "Read the full post:" (URL appended automatically)
-   - 3-5 relevant hashtags on the last line
-   - Tone: warm professional — smart but not stiff
-
 Return ONLY raw JSON, no markdown fences:
-{{
+{
   "tweet": "...",
   "linkedin_post": "..."
-}}"""
+}"""
 
     for model_name in [GEMINI_MODEL_PRIMARY, GEMINI_MODEL_FALLBACK]:
         try:
