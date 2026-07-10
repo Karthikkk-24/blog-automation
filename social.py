@@ -26,10 +26,11 @@ Tags       : {', '.join(tags)}
 Generate two social media posts:
 
 1. TWEET (max 240 chars — URL will be appended separately):
-   - Open with a hook: surprising stat, bold question, or counterintuitive statement
-   - Make someone STOP scrolling and want to click
-   - Include 1-2 relevant hashtags
-   - Never start with "Just published", "New blog", or "Excited to share"
+   - Write an extremely engaging, spicy, and slightly controversial (but factual) hook! Make it punchy.
+   - Use 1-2 relevant emojis to make it pop visually.
+   - Make someone STOP scrolling instantly and feel like they MUST click.
+   - Include 1-2 highly relevant hashtags.
+   - Never start with boring phrases like "Just published", "New blog", or "Excited to share".
 
 2. LINKEDIN_POST (120-180 words):
    - Open with a sharp insight or question — no fluff opener
